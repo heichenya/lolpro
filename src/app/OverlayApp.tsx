@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 type OverlayAugmentRarity = Settings['overlay']['augmentRarity']
+type BuildListSortMode = Settings['buildLists']['sortMode']
 
 export default function OverlayApp() {
   const { t } = useI18n()
@@ -43,6 +44,7 @@ export default function OverlayApp() {
   }, [resolvedChampionId, champions])
 
   const selectedAugmentRarity: OverlayAugmentRarity = settings?.overlay.augmentRarity ?? 'prismatic'
+  const buildListSortMode: BuildListSortMode = settings?.buildLists.sortMode ?? 'composite'
 
   useEffect(() => {
     document.documentElement.classList.add('overlay-route')
@@ -116,7 +118,11 @@ export default function OverlayApp() {
             >
               <div className="space-y-4 p-4">
                 {build ? (
-                  <ModeOverlayContent build={build} selectedAugmentRarity={selectedAugmentRarity} />
+                  <ModeOverlayContent
+                    build={build}
+                    selectedAugmentRarity={selectedAugmentRarity}
+                    buildListSortMode={buildListSortMode}
+                  />
                 ) : champions ? (
                   <div className="space-y-3 text-xs text-muted-foreground">
                     <div>{t('overlay.empty.line1')}</div>

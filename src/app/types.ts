@@ -4,6 +4,7 @@ export type {
   AugmentRecommendation,
   BuildSummary,
   BuildResult,
+  BuildListSortMode,
   ChampionSummary,
   ChampionProfile,
   CounterRecommendation,

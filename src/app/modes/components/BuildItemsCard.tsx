@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 
-import { compareItemsByCompositeScore } from '@shared/itemSort'
+import { compareItemsBySortMode } from '@shared/recommendationSort'
 import type { BuildResult, ItemRecommendation, StartingItemsRecommendation } from '@/app/types'
+import { useBuildSortMode } from '@/app/hooks/use-build-sort-mode'
 import { fmtPct } from '@/app/main/utils'
 import { useI18n } from '@/app/i18n'
 
@@ -18,15 +19,17 @@ function ItemComboList({
   combos,
   emptyText,
   showItemNames = false,
+  sortMode,
 }: {
   combos: StartingItemsRecommendation[]
   emptyText: string
   showItemNames?: boolean
+  sortMode: 'composite' | 'winRate' | 'pickRate'
 }) {
   if (!combos.length) {
     return <div className="text-sm text-muted-foreground">{emptyText}</div>
   }
-  const orderedCombos = [...combos].sort(compareItemsByCompositeScore)
+  const orderedCombos = [...combos].sort((a, b) => compareItemsBySortMode(a, b, sortMode))
 
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -69,12 +72,18 @@ function ItemComboList({
   )
 }
 
-function SituationalItemList({ items }: { items: ItemRecommendation[] }) {
+function SituationalItemList({
+  items,
+  sortMode,
+}: {
+  items: ItemRecommendation[]
+  sortMode: 'composite' | 'winRate' | 'pickRate'
+}) {
   const { t } = useI18n()
   if (!items.length) {
     return <div className="text-sm text-muted-foreground">{t('panel.items.situationalEmpty')}</div>
   }
-  const orderedItems = [...items].sort(compareItemsByCompositeScore)
+  const orderedItems = [...items].sort((a, b) => compareItemsBySortMode(a, b, sortMode))
 
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -113,6 +122,7 @@ function SituationalItemList({ items }: { items: ItemRecommendation[] }) {
 
 export function BuildItemsCard({ build }: Props) {
   const { t } = useI18n()
+  const sortMode = useBuildSortMode()
   const isArena = build.mode === 'arena'
   const situationalItems = useMemo<ItemRecommendation[]>(() => {
     const ids = build.situationalItems ?? []
@@ -141,8 +151,8 @@ export function BuildItemsCard({ build }: Props) {
           averageIndex: null,
         }
       })
-      .sort(compareItemsByCompositeScore)
-  }, [build.items, build.patch, build.situationalItems, t])
+      .sort((a, b) => compareItemsBySortMode(a, b, sortMode))
+  }, [build.items, build.patch, build.situationalItems, sortMode, t])
 
   return (
     <Card className="detail-surface overflow-hidden rounded-3xl">
@@ -164,6 +174,7 @@ export function BuildItemsCard({ build }: Props) {
                 combos={build.prismaticItems ?? []}
                 emptyText={t('panel.items.empty')}
                 showItemNames
+                sortMode={sortMode}
               />
             </TabsContent>
           ) : null}
@@ -173,19 +184,29 @@ export function BuildItemsCard({ build }: Props) {
               combos={build.startingItems ?? []}
               emptyText={t('panel.items.empty')}
               showItemNames
+              sortMode={sortMode}
             />
           </TabsContent>
 
           <TabsContent value="core" className="mt-4">
-            <ItemComboList combos={build.coreItems ?? []} emptyText={t('panel.items.empty')} />
+            <ItemComboList
+              combos={build.coreItems ?? []}
+              emptyText={t('panel.items.empty')}
+              sortMode={sortMode}
+            />
           </TabsContent>
 
           <TabsContent value="boots" className="mt-4">
-            <ItemComboList combos={build.bootsItems ?? []} emptyText={t('panel.items.empty')} showItemNames />
+            <ItemComboList
+              combos={build.bootsItems ?? []}
+              emptyText={t('panel.items.empty')}
+              showItemNames
+              sortMode={sortMode}
+            />
           </TabsContent>
 
           <TabsContent value="situational" className="mt-4">
-            <SituationalItemList items={situationalItems} />
+            <SituationalItemList items={situationalItems} sortMode={sortMode} />
           </TabsContent>
         </Tabs>
       </CardContent>

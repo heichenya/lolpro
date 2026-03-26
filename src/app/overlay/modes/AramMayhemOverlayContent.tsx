@@ -10,7 +10,7 @@ import {
   groupAugmentsByRarity,
   resolveLateItems,
   selectActiveAugmentRarity,
-  sortAugmentsByAramGrade,
+  sortAugments,
 } from '../utils'
 
 type AramMayhemBuild = Extract<BuildResult, { mode: 'aram-mayhem' }>
@@ -18,25 +18,30 @@ type AramMayhemBuild = Extract<BuildResult, { mode: 'aram-mayhem' }>
 export function AramMayhemOverlayContent({
   build,
   selectedAugmentRarity,
+  buildListSortMode,
 }: {
   build: AramMayhemBuild
   selectedAugmentRarity: Settings['overlay']['augmentRarity']
+  buildListSortMode: Settings['buildLists']['sortMode']
 }) {
   const { t } = useI18n()
   const groupedAugments = useMemo(() => groupAugmentsByRarity(build.augments), [build.augments])
   const topPrismatic = useMemo(
-    () => sortAugmentsByAramGrade(groupedAugments.prismatic).slice(0, 10),
-    [groupedAugments.prismatic],
+    () => sortAugments(groupedAugments.prismatic, build.mode, buildListSortMode).slice(0, 10),
+    [build.mode, buildListSortMode, groupedAugments.prismatic],
   )
   const topGold = useMemo(
-    () => sortAugmentsByAramGrade(groupedAugments.gold).slice(0, 10),
-    [groupedAugments.gold],
+    () => sortAugments(groupedAugments.gold, build.mode, buildListSortMode).slice(0, 10),
+    [build.mode, buildListSortMode, groupedAugments.gold],
   )
   const topSilver = useMemo(
-    () => sortAugmentsByAramGrade(groupedAugments.silver).slice(0, 10),
-    [groupedAugments.silver],
+    () => sortAugments(groupedAugments.silver, build.mode, buildListSortMode).slice(0, 10),
+    [build.mode, buildListSortMode, groupedAugments.silver],
   )
-  const visibleItems = useMemo(() => resolveLateItems(build).slice(0, 10), [build])
+  const visibleItems = useMemo(
+    () => resolveLateItems(build, buildListSortMode).slice(0, 10),
+    [build, buildListSortMode],
+  )
 
   const sections = [
     { key: 'prismatic', label: t('panel.augments.prismatic'), items: topPrismatic },

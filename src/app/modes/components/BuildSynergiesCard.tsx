@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 
+import { compareBySortMode, compareByWinRateThenPickRate } from '@shared/recommendationSort'
 import type { BuildResult, ChampionSummary } from '@/app/types'
+import { useBuildSortMode } from '@/app/hooks/use-build-sort-mode'
 import { fmtPct } from '@/app/main/utils'
 import { useI18n } from '@/app/i18n'
 import { championIconUrlById } from './view-helpers'
@@ -15,12 +17,13 @@ type Props = {
 
 export function BuildSynergiesCard({ build, champions }: Props) {
   const { t } = useI18n()
+  const sortMode = useBuildSortMode()
   const synergies = useMemo(
     () =>
-      [...(build.synergies ?? [])].sort(
-        (a, b) => (b.winRate ?? -1) - (a.winRate ?? -1) || (b.pickRate ?? -1) - (a.pickRate ?? -1),
+      [...(build.synergies ?? [])].sort((a, b) =>
+        compareBySortMode(a, b, sortMode, compareByWinRateThenPickRate),
       ),
-    [build.synergies],
+    [build.synergies, sortMode],
   )
   if (!synergies.length) return null
 

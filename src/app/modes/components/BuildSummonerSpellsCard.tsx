@@ -1,4 +1,6 @@
+import { compareByPickRateThenWinRate, compareBySortMode } from '@shared/recommendationSort'
 import type { BuildResult } from '@/app/types'
+import { useBuildSortMode } from '@/app/hooks/use-build-sort-mode'
 import { fmtPct } from '@/app/main/utils'
 import { useI18n } from '@/app/i18n'
 
@@ -12,15 +14,19 @@ type Props = {
 
 export function BuildSummonerSpellsCard({ build }: Props) {
   const { t } = useI18n()
+  const sortMode = useBuildSortMode()
+  const orderedSpells = [...(build.summonerSpells ?? [])].sort((a, b) =>
+    compareBySortMode(a, b, sortMode, compareByPickRateThenWinRate),
+  )
 
   return (
     <Card className="detail-surface overflow-hidden rounded-3xl">
       <CardContent className="space-y-4 p-4 pt-4">
         <div className="text-sm font-semibold">{t('panel.skills.spells')}</div>
 
-        {build.summonerSpells?.length ? (
+        {orderedSpells.length ? (
           <div className="space-y-2">
-            {build.summonerSpells.slice(0, 3).map((combo, idx) => (
+            {orderedSpells.slice(0, 3).map((combo, idx) => (
               <div key={idx} className="rounded-3xl border border-border/50 bg-background/40 p-3">
                 <div className="flex flex-wrap items-center gap-2">
                   {combo.summonerSpellIds.map((id, i) => {

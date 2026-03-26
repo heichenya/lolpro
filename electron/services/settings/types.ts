@@ -21,6 +21,9 @@ export const DEFAULT_SETTINGS: Settings = {
     y: -1,
     augmentRarity: 'prismatic',
   },
+  buildLists: {
+    sortMode: 'composite',
+  },
   hotkeys: {
     togglePinned: 'CommandOrControl+Shift+T',
     toggleInteractive: 'CommandOrControl+Shift+I',

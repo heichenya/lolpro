@@ -26,6 +26,7 @@ function cloneSettings(value: Settings): Settings {
       },
     },
     overlay: { ...value.overlay },
+    buildLists: { ...value.buildLists },
     hotkeys: { ...value.hotkeys },
   }
 }
@@ -47,6 +48,10 @@ function deepMergeSettings(base: Settings, patch: SettingsPatch): Settings {
     overlay: {
       ...base.overlay,
       ...(patch.overlay ?? {}),
+    },
+    buildLists: {
+      ...base.buildLists,
+      ...(patch.buildLists ?? {}),
     },
     hotkeys: {
       ...base.hotkeys,
@@ -114,6 +119,17 @@ function coerceHotkeys(patch: Record<string, unknown>, base: Settings): Settings
   return hotkeys
 }
 
+function coerceBuildLists(patch: Record<string, unknown>, base: Settings): Settings['buildLists'] {
+  const buildLists = { ...base.buildLists }
+  const raw = patch.buildLists
+  if (!raw || typeof raw !== 'object') return buildLists
+  const input = raw as Record<string, unknown>
+  if (input.sortMode === 'composite' || input.sortMode === 'winRate' || input.sortMode === 'pickRate') {
+    buildLists.sortMode = input.sortMode
+  }
+  return buildLists
+}
+
 function coerceSettings(raw: unknown): Settings {
   const parsed = settingsSchema.safeParse(raw)
   if (parsed.success) return cloneSettings(parsed.data)
@@ -128,6 +144,7 @@ function coerceSettings(raw: unknown): Settings {
   base.theme = coerceTheme(patch, base)
   base.dataSource = coerceDataSource(patch, base)
   base.overlay = coerceOverlay(patch, base)
+  base.buildLists = coerceBuildLists(patch, base)
   base.hotkeys = coerceHotkeys(patch, base)
 
   return base

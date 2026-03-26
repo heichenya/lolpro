@@ -11,7 +11,7 @@ import {
   groupAugmentsByRarity,
   resolveLateItems,
   selectActiveAugmentRarity,
-  sortAugmentsByWinRateDesc,
+  sortAugments,
 } from '../utils'
 
 type ArenaBuild = Extract<BuildResult, { mode: 'arena' }>
@@ -19,9 +19,11 @@ type ArenaBuild = Extract<BuildResult, { mode: 'arena' }>
 export function ArenaOverlayContent({
   build,
   selectedAugmentRarity,
+  buildListSortMode,
 }: {
   build: ArenaBuild
   selectedAugmentRarity: OverlayAugmentRarity
+  buildListSortMode: 'composite' | 'winRate' | 'pickRate'
 }) {
   const { t } = useI18n()
 
@@ -31,10 +33,13 @@ export function ArenaOverlayContent({
     [groupedAugments, selectedAugmentRarity],
   )
   const visibleAugments = useMemo(
-    () => sortAugmentsByWinRateDesc(groupedAugments[activeAugmentRarity]).slice(0, 10),
-    [activeAugmentRarity, groupedAugments],
+    () => sortAugments(groupedAugments[activeAugmentRarity], build.mode, buildListSortMode).slice(0, 10),
+    [activeAugmentRarity, build.mode, buildListSortMode, groupedAugments],
   )
-  const visibleItems = useMemo(() => resolveLateItems(build).slice(0, 10), [build])
+  const visibleItems = useMemo(
+    () => resolveLateItems(build, buildListSortMode).slice(0, 10),
+    [build, buildListSortMode],
+  )
 
   const augmentRarityLabel = useMemo(() => {
     if (activeAugmentRarity === 'gold') return t('panel.augments.gold')

@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 
+import { compareByPickRateThenWinRate, compareBySortMode } from '@shared/recommendationSort'
 import type { BuildResult } from '@/app/types'
+import { useBuildSortMode } from '@/app/hooks/use-build-sort-mode'
 import { fmtPct } from '@/app/main/utils'
 import { useI18n } from '@/app/i18n'
 
@@ -94,6 +96,7 @@ function RunePerkCard({ title, perks }: { title: string; perks: RunePerk[] }) {
 
 export function BuildRunesCard({ build }: Props) {
   const { t } = useI18n()
+  const sortMode = useBuildSortMode()
   const runeGroups = useMemo(() => {
     const out = new Map<
       number,
@@ -119,12 +122,18 @@ export function BuildRunesCard({ build }: Props) {
       })
     }
 
+    const sortRunes = (items: NonNullable<BuildResult['runes']>) =>
+      [...items].sort((a, b) => compareBySortMode(a, b, sortMode, compareByPickRateThenWinRate))
+
     return Array.from(out.values()).sort((a, b) => {
-      const aTop = a.runes.reduce((max, rune) => Math.max(max, rune.pickRate ?? -1), -1)
-      const bTop = b.runes.reduce((max, rune) => Math.max(max, rune.pickRate ?? -1), -1)
-      return bTop - aTop
+      const aTop = sortRunes(a.runes)[0]
+      const bTop = sortRunes(b.runes)[0]
+      if (!aTop && !bTop) return 0
+      if (!aTop) return 1
+      if (!bTop) return -1
+      return compareBySortMode(aTop, bTop, sortMode, compareByPickRateThenWinRate)
     })
-  }, [build.runes])
+  }, [build.runes, sortMode])
 
   return (
     <Card className="detail-surface overflow-hidden rounded-3xl">
@@ -149,7 +158,9 @@ export function BuildRunesCard({ build }: Props) {
 
             {runeGroups.map((group) => {
               const rune =
-                [...group.runes].sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1))[0] ?? group.runes[0]
+                [...group.runes].sort((a, b) =>
+                  compareBySortMode(a, b, sortMode, compareByPickRateThenWinRate),
+                )[0] ?? group.runes[0]
               return (
                 <TabsContent key={group.styleId} value={String(group.styleId)} className="mt-4">
                   <div className="grid gap-3 lg:grid-cols-2">

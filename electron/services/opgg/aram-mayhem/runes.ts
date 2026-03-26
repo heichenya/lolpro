@@ -74,5 +74,4 @@ export function parseOpggRunes(params: {
     })
     .filter((row): row is NonNullable<typeof row> => !!row)
     .sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1))
-    .slice(0, 6)
 }

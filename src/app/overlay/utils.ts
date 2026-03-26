@@ -1,5 +1,11 @@
 import type { AugmentRecommendation, BuildResult, ItemRecommendation, Settings } from '@/app/types'
-import { compareItemsByCompositeScore } from '@shared/itemSort'
+import {
+  compareAramAugmentsByComposite,
+  compareBySortMode,
+  compareByWinRateThenPickRate,
+  compareItemsBySortMode,
+  type BuildListSortMode,
+} from '@shared/recommendationSort'
 
 export type OverlayAugmentRarity = Settings['overlay']['augmentRarity']
 
@@ -29,25 +35,23 @@ export function selectActiveAugmentRarity(
   return 'silver'
 }
 
-export function sortAugmentsByWinRateDesc(items: AugmentRecommendation[]) {
-  return [...items].sort(
-    (a, b) => (b.winRate ?? -1) - (a.winRate ?? -1) || (b.pickRate ?? -1) - (a.pickRate ?? -1),
-  )
-}
-
 export function aramAugmentGrade(tier: number | null | undefined): string | null {
   if (typeof tier !== 'number' || !Number.isFinite(tier) || tier < 0) return null
   const map = ['S', 'A', 'B', 'C', 'D', 'F']
   return map[tier] ?? null
 }
 
-export function sortAugmentsByAramGrade(items: AugmentRecommendation[]) {
-  return [...items].sort(
-    (a, b) => (a.tier ?? 999) - (b.tier ?? 999) || (b.pickRate ?? -1) - (a.pickRate ?? -1),
-  )
+export function sortAugments(
+  items: AugmentRecommendation[],
+  mode: BuildResult['mode'],
+  sortMode: BuildListSortMode,
+) {
+  const compositeComparator =
+    mode === 'aram-mayhem' ? compareAramAugmentsByComposite : compareByWinRateThenPickRate
+  return [...items].sort((a, b) => compareBySortMode(a, b, sortMode, compositeComparator))
 }
 
-export function resolveLateItems(build: BuildResult): ItemRecommendation[] {
+export function resolveLateItems(build: BuildResult, sortMode: BuildListSortMode): ItemRecommendation[] {
   const ids = build.situationalItems ?? []
   if (!ids.length) return []
 
@@ -77,5 +81,5 @@ export function resolveLateItems(build: BuildResult): ItemRecommendation[] {
       }
     })
 
-  return lateItems.sort(compareItemsByCompositeScore)
+  return lateItems.sort((a, b) => compareItemsBySortMode(a, b, sortMode))
 }

@@ -150,7 +150,7 @@ export function parseSummonerSpells(
     })
   }
 
-  return rows.sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1)).slice(0, 6)
+  return rows.sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1))
 }
 
 export function parseSkillOrders(value: unknown): SkillOrderRecommendation[] {
@@ -171,11 +171,11 @@ export function parseSkillOrders(value: unknown): SkillOrderRecommendation[] {
     })
   }
 
-  return rows.sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1)).slice(0, 6)
+  return rows.sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1))
 }
 
 export function parseSkillMasteries(skillOrders: SkillOrderRecommendation[]) {
-  return skillOrders.slice(0, 3).map((order) => ({
+  return skillOrders.map((order) => ({
     order: order.skillOrder.slice(0, 4).map((id) => {
       if (id === 1) return 'Q'
       if (id === 2) return 'W'
@@ -214,7 +214,6 @@ export function parseBootCombos(params: {
   const rows = parseSituationalRows(params.value)
     .filter((row) => BOOT_ITEM_IDS.has(row.itemId))
     .sort(compareItemsByCompositeScore)
-    .slice(0, 8)
 
   return rows
     .map((row) =>

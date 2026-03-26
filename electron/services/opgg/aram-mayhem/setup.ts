@@ -49,7 +49,6 @@ export function parseSummonerSpells(params: {
       return acc
     }, [])
     .sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1))
-    .slice(0, 6)
 }
 
 export function parseSkillOrders(params: {
@@ -81,7 +80,6 @@ export function parseSkillOrders(params: {
     })
     .filter((row): row is SkillOrderRecommendation => !!row)
     .sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1))
-    .slice(0, 6)
 }
 
 export function parseSkillMasteries(params: {
@@ -107,5 +105,4 @@ export function parseSkillMasteries(params: {
     })
     .filter((mastery) => mastery.order.length > 0)
     .sort((a, b) => (b.pickRate ?? -1) - (a.pickRate ?? -1))
-    .slice(0, 6)
 }

@@ -97,7 +97,6 @@ export function transformOpggToAramMayhemBuild(input: TransformInput): AramMayhe
     .map((combo) => comboToItems(combo, itemMetaMap, assetPatch))
     .filter((combo): combo is StartingItemsRecommendation => !!combo)
     .sort(compareItemsByCompositeScore)
-    .slice(0, 8)
 
   const coreItems = (
     asArray(resolvedPosition?.core_items).length
@@ -107,7 +106,6 @@ export function transformOpggToAramMayhemBuild(input: TransformInput): AramMayhe
     .map((combo) => comboToItems(combo, itemMetaMap, assetPatch))
     .filter((combo): combo is StartingItemsRecommendation => !!combo)
     .sort(compareItemsByCompositeScore)
-    .slice(0, 8)
 
   const bootsItems = (
     asArray(resolvedPosition?.boots).length ? asArray(resolvedPosition?.boots) : asArray(arenaData.boots)
@@ -115,7 +113,6 @@ export function transformOpggToAramMayhemBuild(input: TransformInput): AramMayhe
     .map((combo) => comboToItems(combo, itemMetaMap, assetPatch))
     .filter((combo): combo is StartingItemsRecommendation => !!combo)
     .sort(compareItemsByCompositeScore)
-    .slice(0, 8)
 
   const situationalItemRows = (
     asArray(resolvedPosition?.last_items).length
@@ -138,9 +135,8 @@ export function transformOpggToAramMayhemBuild(input: TransformInput): AramMayhe
     })
     .filter((row): row is NonNullable<typeof row> => !!row)
     .sort(compareItemsByCompositeScore)
-    .slice(0, 18)
 
-  const situationalItems = situationalItemRows.flatMap((row) => row.itemIds).slice(0, 18)
+  const situationalItems = situationalItemRows.flatMap((row) => row.itemIds)
 
   const flatItemMap = new Map<string, ItemRecommendation>()
   const pushFlatItem = (
@@ -267,7 +263,6 @@ export function transformOpggToAramMayhemBuild(input: TransformInput): AramMayhe
     })
     .filter((row): row is NonNullable<typeof row> => !!row)
     .sort(compareByWinRateThenPickRate)
-    .slice(0, 12)
 
   return {
     mode: 'aram-mayhem',

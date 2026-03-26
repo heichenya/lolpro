@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import type { BuildResult } from '@/app/types'
+import type { BuildResult, Settings } from '@/app/types'
 import { useI18n } from '@/app/i18n'
 
 import { OverlayBuildEntry } from '../components/BuildEntry'
@@ -8,9 +8,18 @@ import { resolveLateItems } from '../utils'
 
 type AramBuild = Extract<BuildResult, { mode: 'aram' | 'urf' | 'ranked' }>
 
-export function AramOverlayContent({ build }: { build: AramBuild }) {
+export function AramOverlayContent({
+  build,
+  buildListSortMode,
+}: {
+  build: AramBuild
+  buildListSortMode: Settings['buildLists']['sortMode']
+}) {
   const { t } = useI18n()
-  const visibleItems = useMemo(() => resolveLateItems(build).slice(0, 10), [build])
+  const visibleItems = useMemo(
+    () => resolveLateItems(build, buildListSortMode).slice(0, 10),
+    [build, buildListSortMode],
+  )
 
   return (
     <div className="space-y-4">

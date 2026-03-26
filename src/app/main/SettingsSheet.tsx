@@ -12,6 +12,7 @@ import {
 
 import type { AppUpdateStatus, Settings, SettingsPatch, SupportedMode } from '@/app/types'
 import { useI18n } from '@/app/i18n'
+import { BuildListSortSection } from '@/app/main/BuildListSortSection'
 import { getHotkeyRows } from '@/app/main/hotkeyRows'
 import { UpdateSection } from '@/app/main/UpdateSection'
 
@@ -188,6 +189,10 @@ export function SettingsSheet({
                   </Select>
                 </div>
               </div>
+
+              <Separator />
+
+              <BuildListSortSection settings={settings} onApplySettingsPatch={onApplySettingsPatch} />
 
               <Separator />
 

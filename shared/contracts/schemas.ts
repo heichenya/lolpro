@@ -5,6 +5,7 @@ import { OPGG_TIERS, OPGG_REGIONS } from '../opgg'
 
 const localeLiteral = z.union([z.literal('en_US'), z.literal('zh_CN')])
 const themePreferenceSchema = z.union([z.literal('system'), z.literal('light'), z.literal('dark')])
+const buildListSortModeSchema = z.enum(['composite', 'winRate', 'pickRate'])
 
 export const riotLocaleSchema = z.string().min(2)
 export const languageSettingSchema = z.union([z.literal('auto'), localeLiteral])
@@ -113,6 +114,9 @@ export const settingsSchema = z.object({
     y: z.number().int(),
     augmentRarity: z.enum(['prismatic', 'gold', 'silver']),
   }),
+  buildLists: z.object({
+    sortMode: buildListSortModeSchema,
+  }),
   hotkeys: z.object({
     togglePinned: z.string().min(1),
     toggleInteractive: z.string().min(1),
@@ -144,6 +148,11 @@ export const settingsPatchSchema = z
         x: z.number().int().optional(),
         y: z.number().int().optional(),
         augmentRarity: z.enum(['prismatic', 'gold', 'silver']).optional(),
+      })
+      .optional(),
+    buildLists: z
+      .object({
+        sortMode: buildListSortModeSchema.optional(),
       })
       .optional(),
     hotkeys: z

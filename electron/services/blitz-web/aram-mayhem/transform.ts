@@ -83,7 +83,6 @@ export async function transformBlitzAramMayhem(params: TransformParams): Promise
     )
     .filter((row): row is NonNullable<typeof row> => !!row)
     .sort(compareItemsByCompositeScore)
-    .slice(0, 8)
 
   const coreItems = asArray(selectedBuild?.coreItems)
     .map((entry) => asRecord(entry))
@@ -99,7 +98,6 @@ export async function transformBlitzAramMayhem(params: TransformParams): Promise
     )
     .filter((row): row is NonNullable<typeof row> => !!row)
     .sort(compareItemsByCompositeScore)
-    .slice(0, 8)
 
   const situationalRows = parseSituationalRows(selectedBuild?.situationalItems)
   const bootsItems = parseBootCombos({
@@ -129,7 +127,6 @@ export async function transformBlitzAramMayhem(params: TransformParams): Promise
     })
     .filter((row): row is NonNullable<typeof row> => !!row)
     .sort((a, b) => compareItemsByCompositeScore(a, b) || (a.tier ?? 999) - (b.tier ?? 999))
-    .slice(0, 36)
 
   // Ensure situational-only entries also carry PR/WR in UI even when absent from summary item map.
   const itemById = new Map(items.map((item) => [item.itemId, item]))

@@ -7,6 +7,7 @@ export type RiotLocale = 'en_US' | 'zh_CN' | 'zh_TW' | (string & {})
 export type LanguageSetting = 'auto' | 'en_US' | 'zh_CN'
 export type ThemePreference = 'system' | 'light' | 'dark'
 export type OverlayAugmentRarity = 'prismatic' | 'gold' | 'silver'
+export type BuildListSortMode = 'composite' | 'winRate' | 'pickRate'
 
 export interface ChampionSummary {
   id: string
@@ -377,6 +378,9 @@ export type Settings = {
     y: number
     augmentRarity: OverlayAugmentRarity
   }
+  buildLists: {
+    sortMode: BuildListSortMode
+  }
   hotkeys: {
     togglePinned: string
     toggleInteractive: string
@@ -390,6 +394,7 @@ export type SettingsPatch = Partial<{
     opgg?: Partial<Settings['dataSource']['opgg']>
   }
   overlay: Partial<Settings['overlay']>
+  buildLists: Partial<Settings['buildLists']>
   hotkeys: Partial<Settings['hotkeys']>
 }>
 

@@ -1,4 +1,6 @@
+import { compareByPickRateThenWinRate, compareBySortMode } from '@shared/recommendationSort'
 import type { BuildResult } from '@/app/types'
+import { useBuildSortMode } from '@/app/hooks/use-build-sort-mode'
 import { fmtPct, skillKey } from '@/app/main/utils'
 import { useI18n } from '@/app/i18n'
 
@@ -21,6 +23,13 @@ function skillChipClass(token: string): string {
 
 export function BuildSkillsCard({ build }: Props) {
   const { t } = useI18n()
+  const sortMode = useBuildSortMode()
+  const orderedSkillOrders = [...(build.skillOrders ?? [])].sort((a, b) =>
+    compareBySortMode(a, b, sortMode, compareByPickRateThenWinRate),
+  )
+  const orderedSkillMasteries = [...(build.skillMasteries ?? [])].sort((a, b) =>
+    compareBySortMode(a, b, sortMode, compareByPickRateThenWinRate),
+  )
 
   return (
     <Card className="detail-surface overflow-hidden rounded-3xl">
@@ -35,7 +44,7 @@ export function BuildSkillsCard({ build }: Props) {
 
           <TabsContent value="order" className="mt-4 space-y-2">
             {build.skillOrders?.length ? (
-              build.skillOrders.slice(0, 3).map((so, idx) => (
+              orderedSkillOrders.slice(0, 3).map((so, idx) => (
                 <div key={idx} className="rounded-3xl border border-border/50 bg-background/40 p-3">
                   <div className="flex flex-wrap items-center gap-1">
                     {so.skillOrder.slice(0, 18).map((n, i) => {
@@ -68,7 +77,7 @@ export function BuildSkillsCard({ build }: Props) {
 
           <TabsContent value="mastery" className="mt-4 space-y-2">
             {build.skillMasteries?.length ? (
-              build.skillMasteries.slice(0, 3).map((mastery, idx) => (
+              orderedSkillMasteries.slice(0, 3).map((mastery, idx) => (
                 <div key={idx} className="rounded-3xl border border-border/50 bg-background/40 p-3">
                   <div className="flex flex-wrap items-center gap-1">
                     {mastery.order.map((token, i) => (

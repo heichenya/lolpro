@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react'
 
+import {
+  compareAramAugmentsByComposite,
+  compareBySortMode,
+  compareByWinRateThenPickRate,
+  type BuildListSortMode,
+} from '@shared/recommendationSort'
 import type { AugmentRecommendation, BuildResult } from '@/app/types'
+import { useBuildSortMode } from '@/app/hooks/use-build-sort-mode'
 import { pct } from '@/app/format'
 import { useI18n } from '@/app/i18n'
 
@@ -18,23 +25,24 @@ type Props = {
 
 type AugmentTab = 'prismatic' | 'gold' | 'silver'
 
-function byRarity(items: AugmentRecommendation[], mode: BuildResult['mode']) {
-  const sortByWinRateThenPickRate = (a: AugmentRecommendation, b: AugmentRecommendation) =>
-    (b.winRate ?? -1) - (a.winRate ?? -1) || (b.pickRate ?? -1) - (a.pickRate ?? -1)
-
+function byRarity(items: AugmentRecommendation[]) {
   const grouped = {
     prismatic: items.filter((a) => a.rarity === 'kPrismatic'),
     gold: items.filter((a) => a.rarity === 'kGold'),
     silver: items.filter((a) => a.rarity === 'kSilver' || !a.rarity),
   }
 
-  if (mode === 'arena') {
-    grouped.prismatic.sort(sortByWinRateThenPickRate)
-    grouped.gold.sort(sortByWinRateThenPickRate)
-    grouped.silver.sort(sortByWinRateThenPickRate)
-  }
-
   return grouped
+}
+
+function sortAugments(
+  items: AugmentRecommendation[],
+  mode: BuildResult['mode'],
+  sortMode: BuildListSortMode,
+) {
+  const compositeComparator =
+    mode === 'aram-mayhem' ? compareAramAugmentsByComposite : compareByWinRateThenPickRate
+  return [...items].sort((a, b) => compareBySortMode(a, b, sortMode, compositeComparator))
 }
 
 function aramAugmentGrade(tier: number | null | undefined): string | null {
@@ -47,7 +55,15 @@ function aramAugmentGrade(tier: number | null | undefined): string | null {
 
 export function BuildAugmentsCard({ build, showAllAugments, onToggleShowAllAugments }: Props) {
   const { t } = useI18n()
-  const grouped = useMemo(() => byRarity(build.augments, build.mode), [build.augments, build.mode])
+  const sortMode = useBuildSortMode()
+  const grouped = useMemo(() => {
+    const base = byRarity(build.augments)
+    return {
+      prismatic: sortAugments(base.prismatic, build.mode, sortMode),
+      gold: sortAugments(base.gold, build.mode, sortMode),
+      silver: sortAugments(base.silver, build.mode, sortMode),
+    }
+  }, [build.augments, build.mode, sortMode])
   const [tab, setTab] = useState<AugmentTab>('prismatic')
 
   const activeTab: AugmentTab = grouped[tab].length

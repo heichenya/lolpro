@@ -8,24 +8,38 @@ import { RankedOverlayContent } from './RankedOverlayContent'
 export function ModeOverlayContent({
   build,
   selectedAugmentRarity,
+  buildListSortMode,
 }: {
   build: BuildResult
   selectedAugmentRarity: Settings['overlay']['augmentRarity']
+  buildListSortMode: Settings['buildLists']['sortMode']
 }) {
   if (build.mode === 'arena') {
-    return <ArenaOverlayContent build={build} selectedAugmentRarity={selectedAugmentRarity} />
+    return (
+      <ArenaOverlayContent
+        build={build}
+        selectedAugmentRarity={selectedAugmentRarity}
+        buildListSortMode={buildListSortMode}
+      />
+    )
   }
   if (build.mode === 'aram') {
-    return <AramOverlayContent build={build} />
+    return <AramOverlayContent build={build} buildListSortMode={buildListSortMode} />
   }
   if (build.mode === 'urf') {
-    return <AramOverlayContent build={build} />
+    return <AramOverlayContent build={build} buildListSortMode={buildListSortMode} />
   }
   if (build.mode === 'ranked') {
-    return <RankedOverlayContent build={build} />
+    return <RankedOverlayContent build={build} buildListSortMode={buildListSortMode} />
   }
   if (build.mode === 'aram-mayhem') {
-    return <AramMayhemOverlayContent build={build} selectedAugmentRarity={selectedAugmentRarity} />
+    return (
+      <AramMayhemOverlayContent
+        build={build}
+        selectedAugmentRarity={selectedAugmentRarity}
+        buildListSortMode={buildListSortMode}
+      />
+    )
   }
   return null
 }
