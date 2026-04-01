@@ -20,6 +20,7 @@ export const IPC_CHANNELS = {
 
     systemGetAccessibilityStatus: 'system:getAccessibilityStatus',
     systemOpenAccessibilitySettings: 'system:openAccessibilitySettings',
+    systemOpenExternalUrl: 'system:openExternalUrl',
     updateGetStatus: 'update:getStatus',
     updateCheck: 'update:check',
     updateDownload: 'update:download',
@@ -28,6 +29,7 @@ export const IPC_CHANNELS = {
     overlayToggle: 'overlay:toggle',
     overlaySetVisible: 'overlay:setVisible',
     overlaySetInteractive: 'overlay:setInteractive',
+    overlaySetCompact: 'overlay:setCompact',
     overlayReportInteraction: 'overlay:reportInteraction',
 
     windowMinimize: 'window:minimize',

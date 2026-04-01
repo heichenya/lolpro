@@ -1,9 +1,16 @@
-import { app, BrowserWindow, globalShortcut, screen, systemPreferences } from 'electron'
+import { app, BrowserWindow, globalShortcut, systemPreferences } from 'electron'
 import { normalizeRiotLocale } from '../../services/blitz/locales'
 import { DEFAULT_SETTINGS, type Settings, type SettingsPatch } from '../../services/settings/types'
 import type { MainProcessDependencies } from '../bootstrap/dependencies'
 import { createMainWindow } from '../windows/mainWindow'
 import { createOverlayWindow } from '../windows/overlayWindow'
+import { applyMainWindowSize, bindMainWindowResizePersistence } from './mainWindowSizing'
+import {
+  applyOverlayBounds,
+  applyOverlayInteractiveState,
+  applyOverlayPinnedState,
+  bindOverlayBoundsPersistence,
+} from './overlayWindowBounds'
 import { registerAppShortcuts } from './shortcutRegistrar'
 type Logger = {
   info: (msg: string, meta?: Record<string, unknown>) => void
@@ -15,9 +22,11 @@ export class AppRuntime {
   private mainWindow: BrowserWindow | null = null
   private overlayWindow: BrowserWindow | null = null
   private currentSettings: Settings = DEFAULT_SETTINGS
+  private overlayCompact = false
+  private applyingMainWindowBounds = false
+  private mainWindowResizeCleanup: (() => void) | null = null
   private applyingOverlayBounds = false
-  private overlayMoveDebounce: NodeJS.Timeout | null = null
-  private overlayMoveListener: (() => void) | null = null
+  private overlayBoundsCleanup: (() => void) | null = null
   private overlayInteractiveAutoResetTimer: NodeJS.Timeout | null = null
   private temporaryInteractiveActive = false
   private settingsMutationQueue: Promise<void> = Promise.resolve()
@@ -30,20 +39,18 @@ export class AppRuntime {
       'settingsStore' | 'gameContext' | 'databaseLifecycle'
     >,
   ) {}
-
   getMainWindow = () => this.mainWindow
   getOverlayWindow = () => this.overlayWindow
+  getAccessibilityStatus = () => ({ trusted: this.isAccessibilityTrusted() })
+
   showMainWindow() {
     this.ensureWindows()
-    this.applyOverlayPositionFromSettings(this.currentSettings)
-    this.applyOverlayInteractiveFromSettings(this.currentSettings)
-    this.applyOverlayPinnedFromSettings(this.currentSettings)
-    this.bindOverlayMovePersistence()
+    applyMainWindowSize(this.mainWindow, this.currentSettings, this.setApplyingMainWindowBounds)
+    this.applyOverlayBoundsFromSettings(this.currentSettings)
+    this.applyOverlayWindowStateFromSettings(this.currentSettings)
+    this.bindMainWindowResizePersistence()
+    this.bindOverlayBoundsPersistence()
     this.mainWindow?.show()
-  }
-
-  getAccessibilityStatus() {
-    return { trusted: this.isAccessibilityTrusted() }
   }
 
   async start() {
@@ -54,13 +61,14 @@ export class AppRuntime {
     this.currentSettings = this.dependencies.settingsStore.get()
     this.dependencies.settingsStore.on('changed', this.onSettingsStoreChanged)
     this.ensureWindows()
-    this.applyOverlayPositionFromSettings(this.currentSettings)
-    this.applyOverlayInteractiveFromSettings(this.currentSettings)
-    this.applyOverlayPinnedFromSettings(this.currentSettings)
+    applyMainWindowSize(this.mainWindow, this.currentSettings, this.setApplyingMainWindowBounds)
+    this.applyOverlayBoundsFromSettings(this.currentSettings)
+    this.applyOverlayWindowStateFromSettings(this.currentSettings)
     this.applyLanguageFromSettings(this.currentSettings)
     await this.dependencies.gameContext.start()
     this.dependencies.gameContext.on('gameEnded', this.onGameEnded)
-    this.bindOverlayMovePersistence()
+    this.bindMainWindowResizePersistence()
+    this.bindOverlayBoundsPersistence()
     this.registerShortcuts(this.currentSettings)
   }
 
@@ -68,13 +76,11 @@ export class AppRuntime {
     this.started = false
     this.dependencies.settingsStore.off('changed', this.onSettingsStoreChanged)
     this.dependencies.gameContext.off('gameEnded', this.onGameEnded)
-    if (this.overlayMoveDebounce) clearTimeout(this.overlayMoveDebounce)
-    this.overlayMoveDebounce = null
+    this.mainWindowResizeCleanup?.()
+    this.mainWindowResizeCleanup = null
+    this.overlayBoundsCleanup?.()
+    this.overlayBoundsCleanup = null
     this.clearTemporaryInteractiveReset()
-    if (this.overlayWindow && this.overlayMoveListener) {
-      this.overlayWindow.off('move', this.overlayMoveListener)
-    }
-    this.overlayMoveListener = null
     globalShortcut.unregisterAll()
     this.dependencies.gameContext.stop()
     this.dependencies.databaseLifecycle.close()
@@ -108,61 +114,50 @@ export class AppRuntime {
     this.scheduleTemporaryInteractiveReset()
   }
 
+  setOverlayCompact(compact: boolean) {
+    if (this.overlayCompact === compact) return
+    this.overlayCompact = compact
+    this.applyOverlayBoundsFromSettings(this.currentSettings)
+    this.applyOverlayWindowStateFromSettings(this.currentSettings)
+  }
+
   private ensureWindows() {
     if (!this.mainWindow || this.mainWindow.isDestroyed()) {
-      this.mainWindow = createMainWindow()
+      this.mainWindow = createMainWindow(this.currentSettings)
       this.mainWindow.on('closed', this.onMainWindowClosed)
     }
     if (!this.overlayWindow || this.overlayWindow.isDestroyed()) {
-      this.overlayWindow = createOverlayWindow()
+      this.overlayWindow = createOverlayWindow(this.currentSettings)
       this.overlayWindow.on('closed', this.onOverlayWindowClosed)
     }
   }
 
-  private isAccessibilityTrusted(): boolean {
-    return process.platform !== 'darwin' || systemPreferences.isTrustedAccessibilityClient(false)
+  private isAccessibilityTrusted = () =>
+    process.platform !== 'darwin' || systemPreferences.isTrustedAccessibilityClient(false)
+
+  private applyOverlayBoundsFromSettings(s: Settings) {
+    applyOverlayBounds({
+      win: this.overlayWindow,
+      overlay: s.overlay,
+      compact: this.overlayCompact,
+      onApplyingChange: this.setApplyingOverlayBounds,
+      onResolveInvalidPosition: ({ x, y }) => {
+        void this.dependencies.settingsStore.applyPatch({ overlay: { x, y } }).catch(() => {})
+      },
+    })
   }
 
-  private applyOverlayPositionFromSettings(s: Settings) {
-    if (!this.overlayWindow) return
-    let { x, y } = s.overlay
-    if (x < 0 || y < 0) {
-      const { width } = screen.getPrimaryDisplay().workAreaSize
-      x = Math.max(0, width - 480)
-      y = 40
-      void this.dependencies.settingsStore.applyPatch({ overlay: { x, y } }).catch(() => {})
-    }
-
-    this.applyingOverlayBounds = true
-    this.overlayWindow.setPosition(x, y, false)
-    setTimeout(() => {
-      this.applyingOverlayBounds = false
-    }, 0)
-  }
-
-  private applyOverlayPinnedFromSettings(s: Settings) {
-    if (!this.overlayWindow) return
-    if (s.overlay.pinned) this.overlayWindow.showInactive()
-    else this.overlayWindow.hide()
-  }
-
-  private applyOverlayInteractiveFromSettings(s: Settings) {
-    if (!this.overlayWindow) return
-    const topLevel = process.platform === 'win32' ? 'screen-saver' : 'floating'
-    this.overlayWindow.setAlwaysOnTop(true, topLevel)
-    this.overlayWindow.moveTop()
-
-    if (s.overlay.interactive) {
-      this.overlayWindow.setIgnoreMouseEvents(false)
-      this.overlayWindow.setFocusable(true)
-      this.overlayWindow.show()
-      this.overlayWindow.focus()
-    } else {
-      this.overlayWindow.setIgnoreMouseEvents(true, { forward: true })
-      this.overlayWindow.setFocusable(false)
-      this.temporaryInteractiveActive = false
-      this.clearTemporaryInteractiveReset()
-    }
+  private applyOverlayWindowStateFromSettings(s: Settings) {
+    applyOverlayInteractiveState({
+      win: this.overlayWindow,
+      interactive: s.overlay.interactive,
+      compact: this.overlayCompact,
+      onDisabled: () => {
+        this.temporaryInteractiveActive = false
+        this.clearTemporaryInteractiveReset()
+      },
+    })
+    applyOverlayPinnedState(this.overlayWindow, s.overlay.pinned)
   }
 
   private applyLanguageFromSettings(s: Settings) {
@@ -173,9 +168,9 @@ export class AppRuntime {
 
   private applyRuntimeSettings(settings: Settings) {
     this.registerShortcuts(settings)
-    this.applyOverlayPositionFromSettings(settings)
-    this.applyOverlayInteractiveFromSettings(settings)
-    this.applyOverlayPinnedFromSettings(settings)
+    applyMainWindowSize(this.mainWindow, settings, this.setApplyingMainWindowBounds)
+    this.applyOverlayBoundsFromSettings(settings)
+    this.applyOverlayWindowStateFromSettings(settings)
     this.applyLanguageFromSettings(settings)
   }
 
@@ -221,41 +216,52 @@ export class AppRuntime {
     })
   }
 
-  private bindOverlayMovePersistence() {
+  private bindOverlayBoundsPersistence() {
     if (!this.overlayWindow) return
-    if (this.overlayMoveListener) this.overlayWindow.off('move', this.overlayMoveListener)
-    this.overlayMoveListener = () => {
-      if (!this.overlayWindow) return
-      if (this.applyingOverlayBounds) return
-      if (this.overlayMoveDebounce) clearTimeout(this.overlayMoveDebounce)
-      this.overlayMoveDebounce = setTimeout(() => {
-        if (!this.overlayWindow) return
-        const [x, y] = this.overlayWindow.getPosition()
-        void this.dependencies.settingsStore.applyPatch({ overlay: { x, y } }).catch(() => {})
-      }, 400)
-    }
-    this.overlayWindow.on('move', this.overlayMoveListener)
+    this.overlayBoundsCleanup?.()
+    this.overlayBoundsCleanup = bindOverlayBoundsPersistence({
+      win: this.overlayWindow,
+      isApplying: () => this.applyingOverlayBounds || this.overlayCompact,
+      onBoundsStable: ({ x, y, width, height }) => {
+        void this.dependencies.settingsStore.applyPatch({ overlay: { x, y, width, height } }).catch(() => {})
+      },
+    })
+  }
+
+  private bindMainWindowResizePersistence() {
+    if (!this.mainWindow) return
+    this.mainWindowResizeCleanup?.()
+    this.mainWindowResizeCleanup = bindMainWindowResizePersistence({
+      win: this.mainWindow,
+      isApplying: () => this.applyingMainWindowBounds,
+      onResizeStable: ({ width, height }) => {
+        void this.dependencies.settingsStore
+          .applyPatch({ window: { main: { width, height } } })
+          .catch(() => {})
+      },
+    })
   }
 
   private onSettingsStoreChanged = (settings: Settings) => {
     this.currentSettings = settings
     this.applyLanguageFromSettings(settings)
   }
-
   private onGameEnded = () => {
     if (this.overlayWindow && !this.currentSettings.overlay.pinned) this.overlayWindow.hide()
   }
 
   private onMainWindowClosed = () => {
+    this.mainWindowResizeCleanup?.()
     this.mainWindow = null
+    this.mainWindowResizeCleanup = null
     this.destroyOverlayWindow()
   }
 
   private onOverlayWindowClosed = () => {
+    this.overlayBoundsCleanup?.()
     this.overlayWindow = null
-    this.overlayMoveListener = null
-    if (this.overlayMoveDebounce) clearTimeout(this.overlayMoveDebounce)
-    this.overlayMoveDebounce = null
+    this.overlayBoundsCleanup = null
+    this.overlayCompact = false
     this.temporaryInteractiveActive = false
     this.clearTemporaryInteractiveReset()
   }
@@ -264,18 +270,15 @@ export class AppRuntime {
     const overlay = this.overlayWindow
     if (!overlay || overlay.isDestroyed()) {
       this.overlayWindow = null
-      this.overlayMoveListener = null
-      if (this.overlayMoveDebounce) clearTimeout(this.overlayMoveDebounce)
-      this.overlayMoveDebounce = null
+      this.overlayBoundsCleanup?.()
+      this.overlayBoundsCleanup = null
       this.temporaryInteractiveActive = false
       this.clearTemporaryInteractiveReset()
       return
     }
 
-    if (this.overlayMoveListener) overlay.off('move', this.overlayMoveListener)
-    this.overlayMoveListener = null
-    if (this.overlayMoveDebounce) clearTimeout(this.overlayMoveDebounce)
-    this.overlayMoveDebounce = null
+    this.overlayBoundsCleanup?.()
+    this.overlayBoundsCleanup = null
     this.temporaryInteractiveActive = false
     this.clearTemporaryInteractiveReset()
 
@@ -296,5 +299,11 @@ export class AppRuntime {
     const timer = this.overlayInteractiveAutoResetTimer
     this.overlayInteractiveAutoResetTimer = null
     clearTimeout(timer)
+  }
+  private setApplyingMainWindowBounds = (value: boolean) => {
+    this.applyingMainWindowBounds = value
+  }
+  private setApplyingOverlayBounds = (value: boolean) => {
+    this.applyingOverlayBounds = value
   }
 }

@@ -80,6 +80,7 @@
   "settings.update.currentVersion": "Current Version",
   "settings.update.latestVersion": "Latest Version",
   "settings.update.progress": "{percent} ({transferred} / {total})",
+  "settings.update.action.homepage": "Open Website",
   "settings.update.action.check": "Check Updates",
   "settings.update.action.download": "Download",
   "settings.update.action.install": "Restart & Install",

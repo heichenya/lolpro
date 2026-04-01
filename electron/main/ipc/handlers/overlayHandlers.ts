@@ -24,6 +24,11 @@ export function registerOverlayHandlers(registry: Registry, runtime: AppRuntime)
     return undefined
   })
 
+  registry.handle(IPC_CHANNELS.invoke.overlaySetCompact, async ({ compact }) => {
+    runtime.setOverlayCompact(compact)
+    return undefined
+  })
+
   registry.handle(IPC_CHANNELS.invoke.overlayReportInteraction, async () => {
     runtime.reportOverlayInteraction()
     return undefined

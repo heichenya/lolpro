@@ -16,4 +16,13 @@ export function registerSystemHandlers(registry: Registry, runtime: AppRuntime) 
     await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility')
     return undefined
   })
+
+  registry.handle(IPC_CHANNELS.invoke.systemOpenExternalUrl, async ({ url }) => {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      throw new Error(`Unsupported external url protocol: ${parsed.protocol}`)
+    }
+    await shell.openExternal(parsed.toString())
+    return undefined
+  })
 }

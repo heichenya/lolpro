@@ -19,7 +19,15 @@ export const DEFAULT_SETTINGS: Settings = {
     interactive: false,
     x: -1,
     y: -1,
+    width: 460,
+    height: 360,
     augmentRarity: 'prismatic',
+  },
+  window: {
+    main: {
+      width: 1200,
+      height: 760,
+    },
   },
   buildLists: {
     sortMode: 'composite',

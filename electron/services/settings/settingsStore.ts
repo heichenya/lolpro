@@ -26,6 +26,12 @@ function cloneSettings(value: Settings): Settings {
       },
     },
     overlay: { ...value.overlay },
+    window: {
+      main: {
+        width: value.window.main.width,
+        height: value.window.main.height,
+      },
+    },
     buildLists: { ...value.buildLists },
     hotkeys: { ...value.hotkeys },
   }
@@ -48,6 +54,12 @@ function deepMergeSettings(base: Settings, patch: SettingsPatch): Settings {
     overlay: {
       ...base.overlay,
       ...(patch.overlay ?? {}),
+    },
+    window: {
+      main: {
+        ...base.window.main,
+        ...(patch.window?.main ?? {}),
+      },
     },
     buildLists: {
       ...base.buildLists,
@@ -87,6 +99,11 @@ function coerceTheme(patch: Record<string, unknown>, base: Settings): Settings['
   return theme
 }
 
+function coerceOverlayDimension(value: unknown, min: number, max: number, fallback: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
+  return Math.min(max, Math.max(min, Math.trunc(value)))
+}
+
 function coerceOverlay(patch: Record<string, unknown>, base: Settings): Settings['overlay'] {
   const overlay = { ...base.overlay }
   const raw = patch.overlay
@@ -96,6 +113,8 @@ function coerceOverlay(patch: Record<string, unknown>, base: Settings): Settings
   if (typeof input.interactive === 'boolean') overlay.interactive = input.interactive
   if (typeof input.x === 'number') overlay.x = Math.trunc(input.x)
   if (typeof input.y === 'number') overlay.y = Math.trunc(input.y)
+  overlay.width = coerceOverlayDimension(input.width, 320, 2_000, overlay.width)
+  overlay.height = coerceOverlayDimension(input.height, 240, 2_000, overlay.height)
   if (
     input.augmentRarity === 'prismatic' ||
     input.augmentRarity === 'gold' ||
@@ -130,6 +149,25 @@ function coerceBuildLists(patch: Record<string, unknown>, base: Settings): Setti
   return buildLists
 }
 
+function coerceWindow(patch: Record<string, unknown>, base: Settings): Settings['window'] {
+  const windowSettings = {
+    main: { ...base.window.main },
+  }
+  const raw = patch.window
+  if (!raw || typeof raw !== 'object') return windowSettings
+  const input = raw as Record<string, unknown>
+  const rawMain = input.main
+  if (!rawMain || typeof rawMain !== 'object') return windowSettings
+  const main = rawMain as Record<string, unknown>
+  if (typeof main.width === 'number' && Number.isFinite(main.width)) {
+    windowSettings.main.width = Math.min(10_000, Math.max(980, Math.trunc(main.width)))
+  }
+  if (typeof main.height === 'number' && Number.isFinite(main.height)) {
+    windowSettings.main.height = Math.min(10_000, Math.max(640, Math.trunc(main.height)))
+  }
+  return windowSettings
+}
+
 function coerceSettings(raw: unknown): Settings {
   const parsed = settingsSchema.safeParse(raw)
   if (parsed.success) return cloneSettings(parsed.data)
@@ -144,6 +182,7 @@ function coerceSettings(raw: unknown): Settings {
   base.theme = coerceTheme(patch, base)
   base.dataSource = coerceDataSource(patch, base)
   base.overlay = coerceOverlay(patch, base)
+  base.window = coerceWindow(patch, base)
   base.buildLists = coerceBuildLists(patch, base)
   base.hotkeys = coerceHotkeys(patch, base)
 

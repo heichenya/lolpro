@@ -28,7 +28,7 @@ export function AramOverlayContent({
           {t('panel.items.core')} / {t('panel.items.situational')}
         </div>
         {visibleItems.length ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2">
             {visibleItems.map((item) => (
               <OverlayBuildEntry
                 key={item.itemId}

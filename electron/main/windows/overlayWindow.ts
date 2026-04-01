@@ -1,25 +1,29 @@
-import { BrowserWindow, screen } from 'electron'
+import { BrowserWindow } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
+import type { Settings } from '../../../shared/contracts'
+import { getOverlayWindowBounds } from '../services/overlayWindowBounds'
 import { buildTrustedRendererOrigins, isTrustedRendererUrl } from '../security/navigation'
 import { resolveIndexHtmlPath } from './indexHtml'
 
-export function createOverlayWindow() {
-  const { width } = screen.getPrimaryDisplay().workAreaSize
+export function createOverlayWindow(settings?: Pick<Settings, 'overlay'>) {
   const isMac = process.platform === 'darwin'
   const iconPath = path.join(process.cwd(), 'build', 'icon.png')
   const icon = !isMac && fs.existsSync(iconPath) ? iconPath : undefined
+  const bounds = getOverlayWindowBounds(settings?.overlay)
 
   const win = new BrowserWindow({
-    width: 460,
-    height: 360,
-    x: Math.max(0, width - 480),
-    y: 40,
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
     show: false,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
-    resizable: false,
+    resizable: !!settings?.overlay.interactive,
+    minWidth: 320,
+    minHeight: 240,
     movable: true,
     skipTaskbar: true,
     hasShadow: false,

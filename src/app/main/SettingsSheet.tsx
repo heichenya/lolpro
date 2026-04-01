@@ -36,6 +36,7 @@ type Props = {
   onCheckAppUpdate: () => Promise<void>
   onDownloadAppUpdate: () => Promise<void>
   onInstallAppUpdate: () => Promise<void>
+  onOpenHomepage: () => Promise<void>
 }
 
 export function SettingsSheet({
@@ -49,6 +50,7 @@ export function SettingsSheet({
   onCheckAppUpdate,
   onDownloadAppUpdate,
   onInstallAppUpdate,
+  onOpenHomepage,
 }: Props) {
   const { t } = useI18n()
   const selectedRegion = settings?.dataSource.opgg.region ?? DEFAULT_OPGG_REGION
@@ -303,6 +305,7 @@ export function SettingsSheet({
                 onCheckAppUpdate={onCheckAppUpdate}
                 onDownloadAppUpdate={onDownloadAppUpdate}
                 onInstallAppUpdate={onInstallAppUpdate}
+                onOpenHomepage={onOpenHomepage}
               />
 
               <Separator />

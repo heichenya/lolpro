@@ -15,7 +15,9 @@ import {
   getChampionProfileRequestSchema,
   getChampionsRequestSchema,
   lcuStatusSchema,
+  openExternalUrlRequestSchema,
   playerCareerSnapshotSchema,
+  setOverlayCompactRequestSchema,
   summonerInfoSchema,
   setOverlayInteractiveRequestSchema,
   setOverlayVisibleRequestSchema,
@@ -99,6 +101,10 @@ export const invokeChannelSchemas = {
     input: noInputSchema,
     output: emptyResponseSchema,
   },
+  [IPC_CHANNELS.invoke.systemOpenExternalUrl]: {
+    input: openExternalUrlRequestSchema,
+    output: emptyResponseSchema,
+  },
 
   [IPC_CHANNELS.invoke.updateGetStatus]: {
     input: noInputSchema,
@@ -127,6 +133,10 @@ export const invokeChannelSchemas = {
   },
   [IPC_CHANNELS.invoke.overlaySetInteractive]: {
     input: setOverlayInteractiveRequestSchema,
+    output: emptyResponseSchema,
+  },
+  [IPC_CHANNELS.invoke.overlaySetCompact]: {
+    input: setOverlayCompactRequestSchema,
     output: emptyResponseSchema,
   },
   [IPC_CHANNELS.invoke.overlayReportInteraction]: {

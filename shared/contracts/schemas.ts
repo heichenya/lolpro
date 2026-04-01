@@ -6,6 +6,9 @@ import { OPGG_TIERS, OPGG_REGIONS } from '../opgg'
 const localeLiteral = z.union([z.literal('en_US'), z.literal('zh_CN')])
 const themePreferenceSchema = z.union([z.literal('system'), z.literal('light'), z.literal('dark')])
 const buildListSortModeSchema = z.enum(['composite', 'winRate', 'pickRate'])
+const windowDimensionSchema = z.number().int().min(640).max(10_000)
+const overlayWidthSchema = z.number().int().min(320).max(2_000)
+const overlayHeightSchema = z.number().int().min(240).max(2_000)
 
 export const riotLocaleSchema = z.string().min(2)
 export const languageSettingSchema = z.union([z.literal('auto'), localeLiteral])
@@ -112,7 +115,15 @@ export const settingsSchema = z.object({
     interactive: z.boolean(),
     x: z.number().int(),
     y: z.number().int(),
+    width: overlayWidthSchema,
+    height: overlayHeightSchema,
     augmentRarity: z.enum(['prismatic', 'gold', 'silver']),
+  }),
+  window: z.object({
+    main: z.object({
+      width: windowDimensionSchema,
+      height: windowDimensionSchema,
+    }),
   }),
   buildLists: z.object({
     sortMode: buildListSortModeSchema,
@@ -147,7 +158,19 @@ export const settingsPatchSchema = z
         interactive: z.boolean().optional(),
         x: z.number().int().optional(),
         y: z.number().int().optional(),
+        width: overlayWidthSchema.optional(),
+        height: overlayHeightSchema.optional(),
         augmentRarity: z.enum(['prismatic', 'gold', 'silver']).optional(),
+      })
+      .optional(),
+    window: z
+      .object({
+        main: z
+          .object({
+            width: windowDimensionSchema.optional(),
+            height: windowDimensionSchema.optional(),
+          })
+          .optional(),
       })
       .optional(),
     buildLists: z
@@ -420,6 +443,14 @@ export const setOverlayVisibleRequestSchema = z.object({
 
 export const setOverlayInteractiveRequestSchema = z.object({
   interactive: z.boolean(),
+})
+
+export const setOverlayCompactRequestSchema = z.object({
+  compact: z.boolean(),
+})
+
+export const openExternalUrlRequestSchema = z.object({
+  url: z.string().url(),
 })
 
 export const getPlayerCareerRequestSchema = z.object({

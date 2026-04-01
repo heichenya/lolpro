@@ -376,7 +376,15 @@ export type Settings = {
     interactive: boolean
     x: number
     y: number
+    width: number
+    height: number
     augmentRarity: OverlayAugmentRarity
+  }
+  window: {
+    main: {
+      width: number
+      height: number
+    }
   }
   buildLists: {
     sortMode: BuildListSortMode
@@ -394,6 +402,9 @@ export type SettingsPatch = Partial<{
     opgg?: Partial<Settings['dataSource']['opgg']>
   }
   overlay: Partial<Settings['overlay']>
+  window: {
+    main?: Partial<Settings['window']['main']>
+  }
   buildLists: Partial<Settings['buildLists']>
   hotkeys: Partial<Settings['hotkeys']>
 }>

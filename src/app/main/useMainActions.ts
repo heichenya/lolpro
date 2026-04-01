@@ -18,6 +18,8 @@ type Params = {
   setClearingCacheMode: (modeId: GameModeId | null) => void
 }
 
+const HOMEPAGE_URL = 'https://lolpro.heichen.space/'
+
 export function useMainActions({
   api,
   mutate,
@@ -144,6 +146,14 @@ export function useMainActions({
     }
   }, [api, setError])
 
+  const onOpenHomepage = useCallback(async () => {
+    try {
+      await api.openExternalUrl({ url: HOMEPAGE_URL })
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
+  }, [api, setError])
+
   return {
     refreshingBuild,
     onRefreshBuild,
@@ -157,5 +167,6 @@ export function useMainActions({
     onCheckAppUpdate,
     onDownloadAppUpdate,
     onInstallAppUpdate,
+    onOpenHomepage,
   }
 }

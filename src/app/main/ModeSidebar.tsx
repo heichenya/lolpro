@@ -58,6 +58,7 @@ type Props = {
   onCheckAppUpdate: () => Promise<void>
   onDownloadAppUpdate: () => Promise<void>
   onInstallAppUpdate: () => Promise<void>
+  onOpenHomepage: () => Promise<void>
 }
 
 function profileIconUrl(profileIconId: number | undefined) {
@@ -84,6 +85,7 @@ export function ModeSidebar({
   onCheckAppUpdate,
   onDownloadAppUpdate,
   onInstallAppUpdate,
+  onOpenHomepage,
 }: Props) {
   const { t } = useI18n()
   const [refreshingStatus, setRefreshingStatus] = useState(false)
@@ -251,6 +253,7 @@ export function ModeSidebar({
               onCheckAppUpdate={onCheckAppUpdate}
               onDownloadAppUpdate={onDownloadAppUpdate}
               onInstallAppUpdate={onInstallAppUpdate}
+              onOpenHomepage={onOpenHomepage}
             />
           </div>
         </div>

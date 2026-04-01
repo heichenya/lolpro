@@ -84,15 +84,25 @@ export default function OverlayApp() {
     }
   }, [])
 
+  useEffect(() => {
+    const api = window.overlayApi
+    if (!api) return
+    const compact = !resolvedChampionId
+    void api.setOverlayCompact(compact).catch(() => {})
+    return () => {
+      void api.setOverlayCompact(false).catch(() => {})
+    }
+  }, [resolvedChampionId])
+
   return (
     <TooltipProvider delayDuration={150}>
       <div
         className={cn(
-          'pointer-events-auto h-full w-full select-none overflow-hidden bg-transparent p-3 text-[13px] text-foreground',
+          'pointer-events-auto h-full w-full select-none overflow-hidden bg-transparent text-[13px] text-foreground',
         )}
       >
-        <div className="overlay-frost-hover glass-panel-strong flex w-[420px] max-h-[calc(100vh-24px)] flex-col overflow-hidden rounded-3xl shadow-[0_22px_70px_-30px_rgba(0,0,0,0.65)]">
-          <div className="flex h-10 shrink-0 items-center justify-between border-b border-border/60 bg-background/45 px-3 text-[11px] text-muted-foreground/95">
+        <div className="overlay-frost-hover glass-panel-strong flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[28px] shadow-[0_22px_70px_-30px_rgba(0,0,0,0.65)]">
+          <div className="flex h-11 shrink-0 items-center justify-between border-b border-border/60 bg-background/45 px-3 text-[11px] text-muted-foreground/95">
             <div className="flex min-w-0 items-center gap-2">
               <div className="app-drag inline-flex shrink-0 items-center gap-1 rounded-full border border-border/50 bg-background/35 px-2 py-1 text-[10px] text-muted-foreground">
                 <GripHorizontal className="size-3 shrink-0" />
@@ -111,11 +121,8 @@ export default function OverlayApp() {
             <div className="app-no-drag inline-flex items-center" />
           </div>
 
-          <div className="app-no-drag overflow-hidden">
-            <ScrollArea
-              className="max-h-[calc(100vh-76px)]"
-              viewportClassName="h-auto max-h-[calc(100vh-76px)]"
-            >
+          <div className="app-no-drag min-h-0 flex-1 overflow-hidden">
+            <ScrollArea className="h-full" viewportClassName="h-full">
               <div className="space-y-4 p-4">
                 {build ? (
                   <ModeOverlayContent

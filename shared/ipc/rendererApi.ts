@@ -43,6 +43,8 @@ export type BaseRendererApi = {
 
   getAccessibilityStatus: () => Promise<AccessibilityStatus>
   openAccessibilitySettings: () => Promise<void>
+  openExternalUrl: (opts: { url: string }) => Promise<void>
+  setOverlayCompact: (compact: boolean) => Promise<void>
   reportOverlayInteraction: () => Promise<void>
 }
 

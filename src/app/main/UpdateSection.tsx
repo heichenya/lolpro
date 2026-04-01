@@ -1,4 +1,4 @@
-import { Download, RefreshCw, RotateCcw } from 'lucide-react'
+import { Download, Home, RefreshCw, RotateCcw } from 'lucide-react'
 
 import type { AppUpdateStatus } from '@/app/types'
 import { useI18n } from '@/app/i18n'
@@ -12,6 +12,7 @@ type Props = {
   onCheckAppUpdate: () => Promise<void>
   onDownloadAppUpdate: () => Promise<void>
   onInstallAppUpdate: () => Promise<void>
+  onOpenHomepage: () => Promise<void>
 }
 
 function formatBytes(input: number) {
@@ -32,6 +33,7 @@ export function UpdateSection({
   onCheckAppUpdate,
   onDownloadAppUpdate,
   onInstallAppUpdate,
+  onOpenHomepage,
 }: Props) {
   const { t } = useI18n()
   const updateStage = appUpdateStatus?.stage ?? 'disabled'
@@ -79,6 +81,17 @@ export function UpdateSection({
         ) : null}
 
         <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0"
+            aria-label={t('settings.update.action.homepage')}
+            title={t('settings.update.action.homepage')}
+            onClick={() => void onOpenHomepage()}
+          >
+            <Home className="size-4" />
+          </Button>
+
           <Button
             variant="outline"
             className="shrink-0"

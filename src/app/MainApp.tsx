@@ -119,6 +119,7 @@ export default function MainApp() {
     onCheckAppUpdate,
     onDownloadAppUpdate,
     onInstallAppUpdate,
+    onOpenHomepage,
   } = useMainActions({
     api,
     mutate,
@@ -188,6 +189,7 @@ export default function MainApp() {
               onCheckAppUpdate={onCheckAppUpdate}
               onDownloadAppUpdate={onDownloadAppUpdate}
               onInstallAppUpdate={onInstallAppUpdate}
+              onOpenHomepage={onOpenHomepage}
             />
 
             <main className="flex min-w-0 flex-1 flex-col bg-background">
